@@ -13,17 +13,16 @@ Detects 6 emotions live from your webcam:
 - [NumPy](https://numpy.org/) — array processing
 
 ## Installation
-
 ```bash
 # Clone the repo
-  git clone https://github.com/Prithwi035/emotion-recognition.git
+git clone https://github.com/Prithwi035/emotion-recognition.git
 cd emotion-recognition
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Run the app
-streamlit run emotion_app.py
+streamlit run app.py
 ```
 
 ## Features
@@ -36,7 +35,8 @@ streamlit run emotion_app.py
 ## Project Structure
 ```
 emotion-recognition/
-├── emotion_app.py       # Main app
+├── app.py               # Frontend — Streamlit UI
+├── backend.py           # Backend — camera & emotion detection logic
 ├── requirements.txt     # Dependencies
 └── README.md            # This file
 ```
