@@ -16,7 +16,7 @@ Detects 6 emotions live from your webcam:
 
 ```bash
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/emotion-recognition.git
+  git clone https://github.com/Prithwi035/emotion-recognition.git
 cd emotion-recognition
 
 # Install dependencies
