@@ -35,8 +35,9 @@ streamlit run app.py
 ## Project Structure
 ```
 emotion-recognition/
-├── app.py               # Frontend — Streamlit UI
-├── backend.py           # Backend — camera & emotion detection logic
+├── app
+    ├── app.py               # Frontend — Streamlit UI
+    ├── backend.py           # Backend — camera & emotion detection logic              # folder
 ├── requirements.txt     # Dependencies
 └── README.md            # This file
 ```
