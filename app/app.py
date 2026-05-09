@@ -35,7 +35,6 @@ st.set_page_config(
 # -----------------------------------
 st.markdown("""
 <style>
-    /* Dark sleek theme */
     [data-testid="stAppViewContainer"] {
         background: #0d0d0d;
     }
@@ -43,6 +42,8 @@ st.markdown("""
         background: #111111;
         border-right: 1px solid #222;
     }
+    [data-testid="stToolbar"] { display: none !important; }
+    footer                    { display: none !important; }
     h1 {
         font-family: 'Courier New', monospace;
         font-size: 1.6rem !important;
@@ -58,6 +59,17 @@ st.markdown("""
         font-size: 1.3rem;
         color: #00ff88;
         margin-bottom: 10px;
+    }
+    .no-face-box {
+        background: #111;
+        border: 1px solid #333;
+        border-radius: 8px;
+        padding: 12px 20px;
+        font-family: 'Courier New', monospace;
+        font-size: 1rem;
+        color: #555;
+        margin-bottom: 10px;
+        letter-spacing: 0.05em;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -102,11 +114,10 @@ def get_queues():
 def get_worker(_detector, _frame_queue, _result_queue):
     return start_worker(_detector, _frame_queue, _result_queue)
 
-# Initialize all resources
-detector    = get_detector()
-camera      = get_camera()
+detector                  = get_detector()
+camera                    = get_camera()
 frame_queue, result_queue = get_queues()
-worker      = get_worker(detector, frame_queue, result_queue)
+worker                    = get_worker(detector, frame_queue, result_queue)
 
 # -----------------------------------
 # UI PLACEHOLDERS
@@ -123,10 +134,10 @@ fps_slot = st.sidebar.empty()
 # -----------------------------------
 frame_count = 0
 last_result = {
-    "emotion": "Neutral",
+    "emotion":    "no_face",
     "confidence": 0.0,
-    "emotions": {},
-    "box": None,
+    "emotions":   {e: 0.0 for e in EMOTIONS},
+    "box":        None,
 }
 
 # -----------------------------------
@@ -142,41 +153,47 @@ while run:
 
     frame_count += 1
 
-    # Send frame to background worker every N frames
     if frame_count % process_every_n == 0:
         push_frame(frame_queue, frame)
 
-    # Get latest detection result
     last_result = pull_result(result_queue, last_result)
+    no_face     = last_result.get("emotion") == "no_face"
 
-    # Annotate and convert frame
+    # Annotate and display frame
     display_rgb = process_frame(frame, last_result)
-
-    # --- DISPLAY FRAME ---
     frame_placeholder.image(display_rgb, channels="RGB", use_container_width=True)
 
-    # --- EMOTION LABEL ---
-    emotion_placeholder.markdown(
-        f"<div class='emotion-box'>"
-        f"🎭 &nbsp; <b>{last_result['emotion'].upper()}</b>"
-        f" &nbsp;|&nbsp; confidence: {last_result['confidence']:.2f}"
-        f"</div>",
-        unsafe_allow_html=True
-    )
+    # Emotion label
+    if no_face:
+        emotion_placeholder.markdown(
+            "<div class='no-face-box'>👤 &nbsp; No face detected</div>",
+            unsafe_allow_html=True
+        )
+    else:
+        emotion_placeholder.markdown(
+            f"<div class='emotion-box'>"
+            f"🎭 &nbsp; <b>{last_result['emotion'].upper()}</b>"
+            f" &nbsp;|&nbsp; confidence: {last_result['confidence']:.2f}"
+            f"</div>",
+            unsafe_allow_html=True
+        )
 
-    # --- SIDEBAR SCORES ---
+    # Sidebar scores — only show when face detected
     for emotion, slot in sidebar_slots.items():
-        score = last_result["emotions"].get(emotion, 0.0)
-        bar = "█" * int(score * 20)
-        slot.markdown(f"`{emotion:<9}` {bar} `{score:.2f}`")
+        if no_face:
+            slot.markdown(f"`{emotion:<9}` `—`")
+        else:
+            score = last_result["emotions"].get(emotion, 0.0)
+            bar   = "█" * int(score * 20)
+            slot.markdown(f"`{emotion:<9}` {bar} `{score:.2f}`")
 
-    # --- FPS ---
+    # FPS
     fps = 1.0 / max(time.perf_counter() - t0, 1e-6)
     fps_slot.markdown(f"**FPS:** `{fps:.1f}`")
 
 # -----------------------------------
 # CLEANUP
 # -----------------------------------
-frame_queue.put(None)   # Stop worker thread
+frame_queue.put(None)
 camera.release()
 st.info("Camera stopped.")
